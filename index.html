@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retribuciones PDI Laboral — Portal de Transparencia UCM</title>
+<meta name="description" content="Retribuciones del Personal Docente e Investigador Laboral de la Universidad Complutense de Madrid. Portal de Transparencia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --rojo: #b71234;
+  --rojo-dk: #8b0d27;
+  --rojo-lt: #f5e6ea;
+  --rojo-pale: #fef7f8;
+  --negro: #1a1a1a;
+  --gris: #4b5563;
+  --gris-m: #6b7280;
+  --gris-c: #f3f4f6;
+  --borde: #e5e7eb;
+  --blanco: #ffffff;
+  --fn: 'DM Sans', system-ui, sans-serif;
+  --fs: 'Source Serif 4', Georgia, serif;
+  --radius: 10px;
+  --tr: .18s ease;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
+html { scroll-behavior:smooth; font-size:16px }
+body {
+  font-family: var(--fn);
+  background: #eef0f4;
+  color: var(--negro);
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  line-height: 1.6;
+}
+
+.wrap { max-width: 1100px; margin: 0 auto; }
+
+/* ── HEADER ── */
+.hdr {
+  background: linear-gradient(135deg, var(--rojo) 0%, var(--rojo-dk) 100%);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 24px 32px 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.hdr-escudo {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,.15);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.25);
+}
+.hdr-text h1 {
+  font-family: var(--fs);
+  font-size: 22px; font-weight: 600;
+  color: #fff; line-height: 1.2;
+}
+.hdr-text p {
+  font-size: 12.5px; color: rgba(255,255,255,.75);
+  margin-top: 4px; font-weight: 400; letter-spacing: .01em;
+}
+.hdr-text p a { color: rgba(255,255,255,.9); text-decoration: underline; text-underline-offset: 2px; }
+.hdr-text p a:hover { color: #fff; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  background: var(--blanco);
+  border: 1px solid var(--borde); border-top: none;
+  padding: 14px 32px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.ctrl-group { display:flex; flex-direction:column; gap:3px; }
+.ctrl-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--gris-m);
+}
+.year-btns { display: flex; gap: 4px; }
+.ybtn {
+  padding: 7px 16px;
+  border: 2px solid var(--borde); border-radius: 7px;
+  background: var(--blanco); color: var(--gris);
+  font-family: var(--fn); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all var(--tr); white-space: nowrap;
+}
+.ybtn:hover { border-color: var(--rojo); color: var(--rojo); }
+.ybtn.act {
+  background: var(--rojo); border-color: var(--rojo); color: #fff;
+  box-shadow: 0 2px 8px rgba(183,18,52,.3);
+}
+.export-group { display:flex; gap:8px; margin-left:auto; }
+.ebtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: none; border-radius: 7px;
+  font-family: var(--fn); font-size: 12px; font-weight: 700;
+  cursor: pointer; color: #fff; letter-spacing: .02em;
+  transition: all var(--tr); white-space: nowrap;
+}
+.ebtn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+.ebtn.xlsx { background: #1d6f42; }
+.ebtn.csv  { background: #155d36; }
+.ebtn svg  { width:14px; height:14px; flex-shrink:0; }
+
+/* ── MAIN ── */
+.main {
+  background: var(--blanco);
+  border: 1px solid var(--borde); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 28px 32px 40px;
+}
+
+/* ── KPI ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px; margin-bottom: 30px;
+}
+.kpi {
+  background: var(--rojo-pale);
+  border: 1px solid var(--rojo-lt); border-top: 3px solid var(--rojo);
+  border-radius: var(--radius); padding: 16px 18px 14px;
+  transition: box-shadow var(--tr), transform var(--tr);
+}
+.kpi:hover { box-shadow: 0 4px 16px rgba(183,18,52,.1); transform: translateY(-2px); }
+.kpi-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--gris-m); margin-bottom: 6px; }
+.kpi-val { font-family: var(--fs); font-size: 26px; color: var(--rojo); line-height: 1.1; margin-bottom: 3px; }
+.kpi-sub { font-size: 11px; color: var(--gris-m); }
+
+/* ── SECTION HEADERS ── */
+.sec-hdr {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 14px; padding-bottom: 10px;
+  border-bottom: 2px solid var(--rojo-lt); flex-wrap: wrap;
+}
+.sec-hdr h2 { font-family: var(--fs); font-size: 18px; font-weight: 400; color: var(--rojo-dk); }
+.sec-tag { font-size: 11px; color: var(--gris-m); font-style: italic; }
+
+/* ── NOTE ── */
+.nota {
+  background: #fff8e1; border: 1px solid #ffe082;
+  border-left: 4px solid #f59e0b; border-radius: 7px;
+  padding: 9px 14px; font-size: 12.5px; color: #78350f;
+  margin-bottom: 24px; line-height: 1.5;
+}
+
+/* ── SECTION SPACER ── */
+.section-block { margin-bottom: 36px; }
+
+/* ── TABLE ── */
+.tw {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border-radius: 8px; border: 1px solid var(--borde);
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  margin-bottom: 8px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead tr { background: linear-gradient(135deg, var(--rojo) 0%, var(--rojo-dk) 100%); }
+thead th {
+  padding: 11px 14px; text-align: left;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: #fff; white-space: nowrap;
+}
+thead th.num { text-align: right; }
+.subhdr td {
+  background: #f9eaed;
+  font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--rojo-dk); padding: 6px 14px;
+  border-bottom: 1px solid var(--rojo-lt);
+}
+tbody tr { border-bottom: 1px solid var(--borde); transition: background var(--tr); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--rojo-pale); }
+tbody tr:nth-child(even):not(.subhdr) { background: #fafafa; }
+tbody tr:nth-child(even):not(.subhdr):hover { background: var(--rojo-pale); }
+td { padding: 10px 14px; vertical-align: middle; }
+td.cat-cell { font-weight: 600; color: var(--negro); }
+td.ded-cell { color: var(--gris); font-size: 12.5px; }
+td.num { text-align: right; white-space: nowrap; }
+.badge-a {
+  display: inline-block; background: #dbeafe; color: #1e40af;
+  border-radius: 5px; padding: 2px 9px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+.badge-m {
+  display: inline-block; background: #dcfce7; color: #166534;
+  border-radius: 5px; padding: 2px 9px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+.badge-e {
+  display: inline-block; background: #fef3c7; color: #92400e;
+  border-radius: 5px; padding: 2px 9px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+
+/* ── INFO BOX ── */
+.info-box {
+  background: var(--gris-c); border: 1px solid var(--borde);
+  border-radius: 8px; padding: 12px 16px; font-size: 12px;
+  color: var(--gris); line-height: 1.6; margin-top: 10px;
+}
+
+/* ── FUENTE ── */
+.fuente {
+  margin-top: 28px; font-size: 12px; color: var(--gris-m);
+  line-height: 1.6; border-top: 1px solid var(--borde); padding-top: 16px;
+}
+.fuente a { color: var(--rojo-dk); text-decoration: none; font-weight: 600; }
+.fuente a:hover { text-decoration: underline; }
+
+/* ── FOOTER ── */
+.footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--gris-m); }
+.footer a { color: var(--rojo-dk); text-decoration: none; font-weight: 600; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  body { padding: 12px 8px 40px; }
+  .hdr { padding: 18px 20px; }
+  .hdr-text h1 { font-size: 17px; }
+  .toolbar { padding: 12px 20px; gap:10px; }
+  .main { padding: 20px 20px 32px; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .export-group { margin-left: 0; }
+}
+@media (max-width: 500px) {
+  .hdr-escudo { display: none; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .year-btns { flex-wrap: wrap; }
+  .ybtn { font-size: 12px; padding: 6px 12px; }
+  .ebtn { font-size: 11px; padding: 7px 12px; }
+}
+:focus-visible { outline: 3px solid var(--rojo); outline-offset: 2px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="hdr-escudo" aria-hidden="true">🎓</div>
+    <div class="hdr-text">
+      <h1>Retribuciones PDI Laboral</h1>
+      <p>
+        Personal Docente e Investigador Laboral ·
+        <a href="https://www.ucm.es/portaldetransparencia" target="_blank" rel="noopener">Portal de Transparencia UCM</a>
+      </p>
+    </div>
+  </header>
+
+  <div class="toolbar" role="toolbar" aria-label="Filtros y exportación">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Año</span>
+      <div class="year-btns" id="year-btns" role="group" aria-label="Seleccionar año">
+        <button class="ybtn" data-year="2022" onclick="setYear(2022)">2022</button>
+        <button class="ybtn" data-year="2023" onclick="setYear(2023)">2023</button>
+        <button class="ybtn" data-year="2024" onclick="setYear(2024)">2024</button>
+        <button class="ybtn act" data-year="2025" onclick="setYear(2025)">2025</button>
+      </div>
+    </div>
+    <div class="export-group">
+      <button class="ebtn xlsx" onclick="exportXLSX()" aria-label="Descargar Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Excel (.xlsx)
+      </button>
+      <button class="ebtn csv" onclick="exportCSV()" aria-label="Descargar CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        CSV
+      </button>
+    </div>
+  </div>
+
+  <main class="main" id="main-content"></main>
+
+  <footer class="footer">
+    <p>© Universidad Complutense de Madrid · <a href="https://www.ucm.es/portaldetransparencia" target="_blank" rel="noopener">Portal de Transparencia</a></p>
+  </footer>
+
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════
+   DATOS
+══════════════════════════════════════════ */
+const DATOS = {
+  2022: {
+    subida: '3,5%',
+    fuente_fecha: 'Noviembre 2022',
+    nota: 'En 2022 las categorías de Profesor Sustituto y Profesor Permanente Laboral no figuran en la tabla publicada.',
+    salarios: [
+      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 6 HORAS',      anual: 10037.02 },
+      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 5 HORAS',      anual: 8364.30  },
+      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 4 HORAS',      anual: 6691.30  },
+      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 3 HORAS',      anual: 5018.86  },
+      { cat: 'AYUDANTES',                 ded: 'TIEMPO COMPLETO',    anual: 22695.12 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',  ded: 'TIEMPO COMPLETO',    anual: 26123.58 },
+      { cat: 'PROFESOR COLABORADOR',      ded: 'TIEMPO COMPLETO',    anual: 27714.54 },
+      { cat: 'PROFESOR VISITANTE',        ded: 'TIEMPO COMPLETO',    anual: 36281.98 },
+      { cat: 'PROFESOR VISITANTE',        ded: '6 Hs.',              anual: 15717.24 },
+      { cat: 'PROFESOR VISITANTE',        ded: '5 Hs.',              anual: 13097.84 },
+      { cat: 'PROFESOR VISITANTE',        ded: '4 Hs.',              anual: 10478.30 },
+      { cat: 'PROFESOR VISITANTE',        ded: '3 Hs.',              anual: 7858.62  },
+      { cat: 'PROFESOR EMÉRITO',          ded: 'T.P. 3 HORAS',      anual: 7501.20  },
+      { cat: 'PROFESOR CONTRATADO DOCTOR',ded: 'TIEMPO COMPLETO',    anual: 33226.06 },
+    ],
+    trienios: [
+      { ded: 'TIEMPO COMPLETO', meses: 576.84, pagas: 96.14,  total: 672.98  },
+      { ded: 'T.P. 6 HORAS',   meses: 249.84, pagas: 41.64,  total: 291.48  },
+      { ded: 'T.P. 5 HORAS',   meses: 208.32, pagas: 34.72,  total: 243.04  },
+      { ded: 'T.P. 4 HORAS',   meses: 166.56, pagas: 27.76,  total: 194.32  },
+      { ded: 'T.P. 3 HORAS',   meses: 124.92, pagas: 20.82,  total: 145.74  },
+    ],
+    evaluaciones: [
+      { cat: 'PROFESOR CONTRATADO DOCTOR',           anual: 1636.56 },
+      { cat: 'PROFESOR COLABORADOR',                 anual: 1384.92 },
+      { cat: 'PROFESOR VISITANTE',                   anual: 1636.56 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',             anual: 1384.92 },
+      { cat: 'AYUDANTES (sólo eval. docentes)',      anual: 1172.52 },
+    ],
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+  },
+  2023: {
+    subida: '3,5%',
+    fuente_fecha: 'Febrero 2024',
+    nota: null,
+    salarios: [
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10388.32 },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 8657.05  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 6925.50  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5194.52  },
+      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 23489.45 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 27037.91 },
+      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 28684.55 },
+      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 37551.85 },
+      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 16267.34 },
+      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 13556.26 },
+      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 10845.04 },
+      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8133.67  },
+      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 7763.74  },
+      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 34388.97 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 34388.97 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 16873.68 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 14759.72 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 11842.58 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10317.50 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 6925.50  },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5194.52  },
+    ],
+    trienios: [
+      { ded: 'TIEMPO COMPLETO', meses: 597.03, pagas: 99.50,  total: 696.53  },
+      { ded: 'T.P. 6 HORAS',   meses: 258.58, pagas: 43.10,  total: 301.68  },
+      { ded: 'T.P. 5 HORAS',   meses: 215.61, pagas: 35.94,  total: 251.55  },
+      { ded: 'T.P. 4 HORAS',   meses: 172.39, pagas: 28.73,  total: 201.12  },
+      { ded: 'T.P. 3 HORAS',   meses: 129.29, pagas: 21.55,  total: 150.84  },
+      { ded: 'T.P. 2+2',       meses: 95.44,  pagas: 15.91,  total: 111.35  },
+      { ded: 'T.P. 1,5+1,5',   meses: 71.58,  pagas: 11.93,  total: 83.51   },
+      { ded: 'T.P. 8+6',       meses: 402.04, pagas: 67.01,  total: 469.05  },
+      { ded: 'T.P. 7+6',       meses: 351.83, pagas: 58.64,  total: 410.47  },
+      { ded: 'T.P. 6+6',       meses: 260.06, pagas: 43.34,  total: 303.40  },
+      { ded: 'T.P. 5+5',       meses: 216.86, pagas: 36.14,  total: 253.00  },
+      { ded: 'T.P. 4+4',       meses: 173.43, pagas: 28.91,  total: 202.34  },
+      { ded: 'T.P. 3+3',       meses: 130.03, pagas: 21.67,  total: 151.70  },
+    ],
+    evaluaciones: [
+      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1693.84 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1693.84 },
+      { cat: 'PROFESOR COLABORADOR',                    anual: 1433.39 },
+      { cat: 'PROFESOR VISITANTE',                      anual: 1693.84 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR (sólo eval. docentes)', anual: 1433.39 },
+      { cat: 'AYUDANTES (sólo eval. docentes)',         anual: 1213.56 },
+    ],
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+  },
+  2024: {
+    subida: '2,5%',
+    fuente_fecha: 'Julio 2025',
+    nota: null,
+    salarios: [
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10648.03 },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 8873.48  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 7098.64  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5324.38  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 2 HORAS',     anual: 3656.64  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 1,5 HORAS',   anual: 2742.44  },
+      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 24076.69 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 27713.86 },
+      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 29401.66 },
+      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 38490.65 },
+      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 16674.02 },
+      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 13895.17 },
+      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 11116.17 },
+      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8337.01  },
+      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 7957.83  },
+      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 35248.69 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 35248.69 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 17295.28 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 15128.71 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 12138.65 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10575.44 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 7098.64  },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5324.38  },
+    ],
+    trienios: [
+      { ded: 'TIEMPO COMPLETO', meses: 611.96, pagas: 101.99, total: 713.95  },
+      { ded: 'T.P. 6 HORAS',   meses: 265.04, pagas: 44.18,  total: 309.22  },
+      { ded: 'T.P. 5 HORAS',   meses: 221.00, pagas: 36.84,  total: 257.84  },
+      { ded: 'T.P. 4 HORAS',   meses: 176.70, pagas: 29.45,  total: 206.15  },
+      { ded: 'T.P. 3 HORAS',   meses: 132.52, pagas: 22.09,  total: 154.61  },
+      { ded: 'T.P. 2+2',       meses: 97.82,  pagas: 16.30,  total: 114.12  },
+      { ded: 'T.P. 1,5+1,5',   meses: 73.37,  pagas: 12.23,  total: 85.60   },
+      { ded: 'T.P. 8+6',       meses: 412.09, pagas: 68.68,  total: 480.77  },
+      { ded: 'T.P. 7+6',       meses: 360.62, pagas: 60.10,  total: 420.72  },
+      { ded: 'T.P. 6+6',       meses: 266.60, pagas: 44.43,  total: 311.03  },
+      { ded: 'T.P. 5+5',       meses: 222.28, pagas: 37.05,  total: 259.33  },
+      { ded: 'T.P. 4+4',       meses: 177.77, pagas: 29.63,  total: 207.40  },
+      { ded: 'T.P. 3+3',       meses: 133.28, pagas: 22.21,  total: 155.49  },
+    ],
+    evaluaciones: [
+      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1736.19 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1736.19 },
+      { cat: 'PROFESOR COLABORADOR',                    anual: 1469.22 },
+      { cat: 'PROFESOR VISITANTE (sólo eval. docentes)',anual: 1736.19 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR (sólo eval. docentes)', anual: 1469.22 },
+      { cat: 'AYUDANTES (sólo eval. docentes)',         anual: 1243.90 },
+    ],
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+  },
+  2025: {
+    subida: '2,5%',
+    fuente_fecha: 'Diciembre 2025',
+    nota: null,
+    salarios: [
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10914.12 },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 9095.38  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 7276.22  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5457.62  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 2 HORAS',     anual: 3747.94  },
+      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 1,5 HORAS',   anual: 2810.92  },
+      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 24678.64 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 28406.70 },
+      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 30136.68 },
+      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 39452.84 },
+      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 17090.92 },
+      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 14242.48 },
+      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 11394.18 },
+      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8545.46  },
+      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 6991.56  },
+      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 36129.94 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 36129.94 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 17843.42 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 15613.08 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 12531.26 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10925.74 },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 7276.22  },
+      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5457.62  },
+    ],
+    trienios: [
+      { ded: 'TIEMPO COMPLETO', meses: 627.12, pagas: 104.52, total: 731.64  },
+      { ded: 'T.P. 6 HORAS',   meses: 271.68, pagas: 45.28,  total: 316.96  },
+      { ded: 'T.P. 5 HORAS',   meses: 226.56, pagas: 37.76,  total: 264.32  },
+      { ded: 'T.P. 4 HORAS',   meses: 181.20, pagas: 30.20,  total: 211.40  },
+      { ded: 'T.P. 3 HORAS',   meses: 135.84, pagas: 22.64,  total: 158.48  },
+      { ded: 'T.P. 2+2',       meses: 100.20, pagas: 16.70,  total: 116.90  },
+      { ded: 'T.P. 1,5+1,5',   meses: 75.12,  pagas: 12.52,  total: 87.64   },
+      { ded: 'T.P. 8+6',       meses: 422.88, pagas: 70.48,  total: 493.36  },
+      { ded: 'T.P. 7+6',       meses: 370.08, pagas: 61.68,  total: 431.76  },
+      { ded: 'T.P. 6+6',       meses: 273.48, pagas: 45.58,  total: 319.06  },
+      { ded: 'T.P. 5+5',       meses: 227.76, pagas: 37.96,  total: 265.72  },
+      { ded: 'T.P. 4+4',       meses: 182.28, pagas: 30.38,  total: 212.66  },
+      { ded: 'T.P. 3+3',       meses: 136.68, pagas: 22.78,  total: 159.46  },
+    ],
+    evaluaciones: [
+      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1779.60 },
+      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1779.60 },
+      { cat: 'PROFESOR COLABORADOR',                    anual: 1506.00 },
+      { cat: 'PROFESOR VISITANTE',                      anual: 1779.60 },
+      { cat: 'PROFESOR AYUDANTE DOCTOR',                anual: 1506.00 },
+      { cat: 'AYUDANTES',                               anual: 1274.88 },
+    ],
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+  }
+};
+
+/* ══════════════════════════════════════════
+   ESTADO
+══════════════════════════════════════════ */
+let currentYear = 2025;
+
+/* ══════════════════════════════════════════
+   UTILIDADES
+══════════════════════════════════════════ */
+const fmt = n => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function render() {
+  const d = DATOS[currentYear];
+
+  // Group salaries by category
+  const catMap = {};
+  d.salarios.forEach(r => {
+    if (!catMap[r.cat]) catMap[r.cat] = [];
+    catMap[r.cat].push(r);
+  });
+  const cats = Object.keys(catMap);
+
+  // Build salary table rows
+  let salRows = '';
+  cats.forEach(cat => {
+    const items = catMap[cat];
+    items.forEach((r, i) => {
+      salRows += `<tr>
+        <td class="cat-cell">${i === 0 ? r.cat : ''}</td>
+        <td class="ded-cell">${r.ded}</td>
+        <td class="num"><span class="badge-a">${fmt(r.anual)}</span></td>
+      </tr>`;
+    });
+  });
+
+  // Build trienio table rows
+  let trRows = d.trienios.map(r => `
+    <tr>
+      <td class="ded-cell">${r.ded}</td>
+      <td class="num"><span class="badge-m">${fmt(r.meses)}</span></td>
+      <td class="num"><span class="badge-m">${fmt(r.pagas)}</span></td>
+      <td class="num"><span class="badge-a">${fmt(r.total)}</span></td>
+    </tr>
+  `).join('');
+
+  // Build evaluaciones rows
+  let evalRows = d.evaluaciones.map(r => `
+    <tr>
+      <td class="cat-cell">${r.cat}</td>
+      <td class="num"><span class="badge-e">${fmt(r.anual)}</span></td>
+    </tr>
+  `).join('');
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-lbl">Año seleccionado</div>
+        <div class="kpi-val">${currentYear}</div>
+        <div class="kpi-sub">Subida salarial: ${d.subida}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Categorías docentes</div>
+        <div class="kpi-val">${cats.length}</div>
+        <div class="kpi-sub">PDI Laboral UCM</div>
+      </div>
+    </div>
+
+    ${d.nota ? `<div class="nota">⚠️ ${d.nota}</div>` : ''}
+
+    <!-- TABLA 1: SALARIOS -->
+    <div class="section-block">
+      <div class="sec-hdr">
+        <h2>Retribuciones ${currentYear} (subida ${d.subida})</h2>
+        <span class="sec-tag">Importe total anual por categoría y dedicación</span>
+      </div>
+      <div class="tw">
+        <table aria-label="Retribuciones PDI Laboral ${currentYear}">
+          <thead>
+            <tr>
+              <th scope="col" style="min-width:220px">Categoría</th>
+              <th scope="col" style="min-width:160px">Dedicación / Horas lectivas</th>
+              <th scope="col" class="num" style="min-width:150px">Total anual</th>
+            </tr>
+          </thead>
+          <tbody>${salRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLA 2: TRIENIOS -->
+    <div class="section-block">
+      <div class="sec-hdr">
+        <h2>Antigüedad: Importe de cada trienio</h2>
+        <span class="sec-tag">Independiente de la categoría docente</span>
+      </div>
+      <div class="tw">
+        <table aria-label="Trienios PDI Laboral ${currentYear}">
+          <thead>
+            <tr>
+              <th scope="col" style="min-width:160px">Dedicación</th>
+              <th scope="col" class="num" style="min-width:120px">12 meses</th>
+              <th scope="col" class="num" style="min-width:120px">2 pagas extra</th>
+              <th scope="col" class="num" style="min-width:120px">Total anual</th>
+            </tr>
+          </thead>
+          <tbody>${trRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLA 3: EVALUACIONES -->
+    <div class="section-block">
+      <div class="sec-hdr">
+        <h2>Importe de cada evaluación docente o investigadora</h2>
+        <span class="sec-tag">Por evaluación positiva acreditada</span>
+      </div>
+      <div class="tw">
+        <table aria-label="Evaluaciones PDI Laboral ${currentYear}">
+          <thead>
+            <tr>
+              <th scope="col" style="min-width:260px">Categoría</th>
+              <th scope="col" class="num" style="min-width:150px">Importe anual</th>
+            </tr>
+          </thead>
+          <tbody>${evalRows}</tbody>
+        </table>
+      </div>
+      <div class="info-box">
+        Cada profesor a tiempo completo puede percibir un máximo de <strong>seis evaluaciones docentes</strong> y <strong>seis evaluaciones investigadoras</strong>, las primeras tras una evaluación de 5 años de docencia y las segundas tras la evaluación de 6 años de actividad investigadora.
+      </div>
+    </div>
+
+    <!-- COMPLEMENTO ADICIONAL -->
+    <div class="section-block">
+      <div class="sec-hdr">
+        <h2>Importe del complemento adicional</h2>
+      </div>
+      <div class="info-box">
+        ${d.complemento_adicional}
+      </div>
+    </div>
+
+    <div class="fuente">
+      <strong>Fuente:</strong>
+      <a href="https://www.ucm.es/servicio-de-coordinacion,-nominas-y-seguros-sociales" target="_blank" rel="noopener">
+        Servicio de Coordinación, Nóminas y Seguros Sociales – UCM
+      </a>
+      &nbsp;·&nbsp;
+      Vicegerencia de Recursos Humanos
+      &nbsp;·&nbsp;
+      Fecha de actualización de los datos: <strong>8 de abril de 2025</strong>
+      &nbsp;·&nbsp;
+      Datos fuente: ${d.fuente_fecha}
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════
+   CAMBIO DE AÑO
+══════════════════════════════════════════ */
+function setYear(y) {
+  currentYear = y;
+  document.querySelectorAll('.ybtn').forEach(b => {
+    b.classList.toggle('act', +b.dataset.year === y);
+  });
+  render();
+}
+
+/* ══════════════════════════════════════════
+   EXPORTACIÓN
+══════════════════════════════════════════ */
+function buildExportRows() {
+  const d = DATOS[currentYear];
+  const rows = [
+    [`Universidad Complutense de Madrid — Retribuciones PDI Laboral ${currentYear}`],
+    [`Fuente: Servicio de Coordinación, Nóminas y Seguros Sociales · Vicegerencia de RRHH`],
+    [`Subida salarial: ${d.subida} · Datos fuente: ${d.fuente_fecha} · Actualización portal: 8 de abril de 2025`],
+    [],
+    ['TABLA 1: RETRIBUCIONES ANUALES'],
+    ['Categoría', 'Dedicación / Horas lectivas', 'Total anual (€)'],
+  ];
+  d.salarios.forEach(r => rows.push([r.cat, r.ded, r.anual]));
+  rows.push([]);
+  rows.push(['TABLA 2: ANTIGÜEDAD – IMPORTE DE CADA TRIENIO']);
+  rows.push(['Dedicación', '12 meses (€)', '2 pagas extra (€)', 'Total anual (€)']);
+  d.trienios.forEach(r => rows.push([r.ded, r.meses, r.pagas, r.total]));
+  rows.push([]);
+  rows.push(['TABLA 3: IMPORTE DE CADA EVALUACIÓN DOCENTE O INVESTIGADORA']);
+  rows.push(['Categoría', 'Importe anual (€)']);
+  d.evaluaciones.forEach(r => rows.push([r.cat, r.anual]));
+  rows.push([]);
+  rows.push(['COMPLEMENTO ADICIONAL']);
+  rows.push([d.complemento_adicional]);
+  return rows;
+}
+
+function exportXLSX() {
+  const rows = buildExportRows();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:3}},
+    {s:{r:1,c:0},e:{r:1,c:3}},
+    {s:{r:2,c:0},e:{r:2,c:3}},
+  ];
+  ws['!cols'] = [{wch:45},{wch:28},{wch:20},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `PDI Laboral ${currentYear}`);
+  XLSX.writeFile(wb, `UCM_Retribuciones_PDI_Laboral_${currentYear}.xlsx`);
+}
+
+function exportCSV() {
+  const rows = buildExportRows();
+  const csv = 'sep=;\r\n' + rows.map(r =>
+    r.map(c => {
+      const s = c == null ? '' : String(c);
+      return s.includes(';') || s.includes('"') ? `"${s.replace(/"/g,'""')}"` : s;
+    }).join(';')
+  ).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = `UCM_Retribuciones_PDI_Laboral_${currentYear}.csv`;
+  a.click();
+}
+
+/* ══════════════════════════════════════════
+   INICIO
+══════════════════════════════════════════ */
+render();
+</script>
+</body>
+</html>
