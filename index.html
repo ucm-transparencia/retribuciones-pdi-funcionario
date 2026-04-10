@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Retribuciones PDI Laboral — Portal de Transparencia UCM</title>
-<meta name="description" content="Retribuciones del Personal Docente e Investigador Laboral de la Universidad Complutense de Madrid. Portal de Transparencia.">
+<title>Retribuciones PDI Funcionario — Portal de Transparencia UCM</title>
+<meta name="description" content="Retribuciones del Personal Docente e Investigador Funcionario de la Universidad Complutense de Madrid. Portal de Transparencia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -35,7 +35,6 @@ body {
   padding: 24px 16px 60px;
   line-height: 1.6;
 }
-
 .wrap { max-width: 1100px; margin: 0 auto; }
 
 /* ── HEADER ── */
@@ -117,7 +116,7 @@ body {
 /* ── KPI ── */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px; margin-bottom: 30px;
 }
 .kpi {
@@ -128,7 +127,7 @@ body {
 }
 .kpi:hover { box-shadow: 0 4px 16px rgba(183,18,52,.1); transform: translateY(-2px); }
 .kpi-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--gris-m); margin-bottom: 6px; }
-.kpi-val { font-family: var(--fs); font-size: 26px; color: var(--rojo); line-height: 1.1; margin-bottom: 3px; }
+.kpi-val { font-family: var(--fs); font-size: 24px; color: var(--rojo); line-height: 1.1; margin-bottom: 3px; }
 .kpi-sub { font-size: 11px; color: var(--gris-m); }
 
 /* ── SECTION HEADERS ── */
@@ -180,7 +179,7 @@ tbody tr:hover { background: var(--rojo-pale); }
 tbody tr:nth-child(even):not(.subhdr) { background: #fafafa; }
 tbody tr:nth-child(even):not(.subhdr):hover { background: var(--rojo-pale); }
 td { padding: 10px 14px; vertical-align: middle; }
-td.cat-cell { font-weight: 600; color: var(--negro); }
+td.cat-cell { font-weight: 600; color: var(--negro); min-width: 80px; }
 td.ded-cell { color: var(--gris); font-size: 12.5px; }
 td.num { text-align: right; white-space: nowrap; }
 .badge-a {
@@ -198,6 +197,14 @@ td.num { text-align: right; white-space: nowrap; }
   border-radius: 5px; padding: 2px 9px;
   font-size: 12.5px; font-weight: 700; white-space: nowrap;
 }
+.badge-s {
+  display: inline-block; background: #f3e8ff; color: #6b21a8;
+  border-radius: 5px; padding: 2px 9px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+
+/* ── DETAIL TABLE (sueldo, c.destino, c.especifico breakdown) ── */
+.detail-cols th { font-size: 10px; }
 
 /* ── INFO BOX ── */
 .info-box {
@@ -213,6 +220,16 @@ td.num { text-align: right; white-space: nowrap; }
 }
 .fuente a { color: var(--rojo-dk); text-decoration: none; font-weight: 600; }
 .fuente a:hover { text-decoration: underline; }
+
+/* ── TOGGLE DETAIL ── */
+.toggle-detail {
+  font-size: 11px; color: var(--rojo-dk); cursor: pointer;
+  background: none; border: none; font-family: var(--fn);
+  font-weight: 600; padding: 0; text-decoration: underline;
+  text-underline-offset: 2px; margin-bottom: 10px;
+  display: inline-block;
+}
+.toggle-detail:hover { color: var(--rojo); }
 
 /* ── FOOTER ── */
 .footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--gris-m); }
@@ -244,9 +261,9 @@ td.num { text-align: right; white-space: nowrap; }
   <header class="hdr">
     <div class="hdr-escudo" aria-hidden="true">🎓</div>
     <div class="hdr-text">
-      <h1>Retribuciones PDI Laboral</h1>
+      <h1>Retribuciones PDI Funcionario</h1>
       <p>
-        Personal Docente e Investigador Laboral ·
+        Personal Docente e Investigador Funcionario ·
         <a href="https://www.ucm.es/portaldetransparencia" target="_blank" rel="noopener">Portal de Transparencia UCM</a>
       </p>
     </div>
@@ -295,203 +312,168 @@ td.num { text-align: right; white-space: nowrap; }
 
 /* ══════════════════════════════════════════
    DATOS
+   Estructura de salarios:
+   { cat, ded, sueldo12, cDestino12, cEspecifico14, pagasExtra, total }
+   Nota sobre grupos:
+   - GRP 1: Catedráticos de Universidad
+   - GRP 2: Titulares de Universidad / Catedráticos de Escuela Universitaria
+   - GRP 3: Titulares de Escuela Universitaria
 ══════════════════════════════════════════ */
 const DATOS = {
   2022: {
     subida: '3,5%',
     fuente_fecha: 'Noviembre 2022',
-    nota: 'En 2022 las categorías de Profesor Sustituto y Profesor Permanente Laboral no figuran en la tabla publicada.',
+    nota: 'Datos publicados originalmente en formato Word. Convertidos a Excel/CSV para este portal.',
     salarios: [
-      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 6 HORAS',      anual: 10037.02 },
-      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 5 HORAS',      anual: 8364.30  },
-      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 4 HORAS',      anual: 6691.30  },
-      { cat: 'PROFESOR ASOCIADO',         ded: 'T.P. 3 HORAS',      anual: 5018.86  },
-      { cat: 'AYUDANTES',                 ded: 'TIEMPO COMPLETO',    anual: 22695.12 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',  ded: 'TIEMPO COMPLETO',    anual: 26123.58 },
-      { cat: 'PROFESOR COLABORADOR',      ded: 'TIEMPO COMPLETO',    anual: 27714.54 },
-      { cat: 'PROFESOR VISITANTE',        ded: 'TIEMPO COMPLETO',    anual: 36281.98 },
-      { cat: 'PROFESOR VISITANTE',        ded: '6 Hs.',              anual: 15717.24 },
-      { cat: 'PROFESOR VISITANTE',        ded: '5 Hs.',              anual: 13097.84 },
-      { cat: 'PROFESOR VISITANTE',        ded: '4 Hs.',              anual: 10478.30 },
-      { cat: 'PROFESOR VISITANTE',        ded: '3 Hs.',              anual: 7858.62  },
-      { cat: 'PROFESOR EMÉRITO',          ded: 'T.P. 3 HORAS',      anual: 7501.20  },
-      { cat: 'PROFESOR CONTRATADO DOCTOR',ded: 'TIEMPO COMPLETO',    anual: 33226.06 },
+      // CATEDRÁTICOS DE UNIVERSIDAD
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'TIEMPO COMPLETO', sueldo12: 15082.68, cDestino12: 11817.12, cEspecifico14: 15543.92, pagasExtra: 3520.74, total: 45964.46 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 6 HORAS',   sueldo12:  6533.76, cDestino12: 10890.84, cEspecifico14:     0.00, pagasExtra: 2487.12, total: 19911.72 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 5 HORAS',   sueldo12:  5444.76, cDestino12:  9075.72, cEspecifico14:     0.00, pagasExtra: 2072.60, total: 16593.08 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 4 HORAS',   sueldo12:  4356.00, cDestino12:  7260.60, cEspecifico14:     0.00, pagasExtra: 1658.10, total: 13274.70 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 3 HORAS',   sueldo12:  3267.00, cDestino12:  5445.36, cEspecifico14:     0.00, pagasExtra: 1243.56, total:  9955.92 },
+      // TITULARES DE UNIVERSIDAD / CATEDRÁTICOS ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'TIEMPO COMPLETO', sueldo12: 15082.68, cDestino12: 10823.28, cEspecifico14:  7251.72, pagasExtra: 3355.10, total: 36512.78 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 6 HORAS',   sueldo12:  6533.76, cDestino12:  7381.32, cEspecifico14:     0.00, pagasExtra: 1902.20, total: 15817.28 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 5 HORAS',   sueldo12:  5444.76, cDestino12:  6151.08, cEspecifico14:     0.00, pagasExtra: 1585.16, total: 13181.00 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 4 HORAS',   sueldo12:  4356.00, cDestino12:  4920.84, cEspecifico14:     0.00, pagasExtra: 1268.14, total: 10544.98 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 3 HORAS',   sueldo12:  3267.00, cDestino12:  3690.60, cEspecifico14:     0.00, pagasExtra:  951.10, total:  7908.70 },
+      // TITULARES DE ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'TIEMPO COMPLETO', sueldo12: 15082.68, cDestino12:  9495.60, cEspecifico14:  4477.06, pagasExtra: 2190.80, total: 31246.14 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 6 HORAS',   sueldo12:  6533.76, cDestino12:  5775.96, cEspecifico14:     0.00, pagasExtra:  671.98, total: 12981.70 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 5 HORAS',   sueldo12:  5444.76, cDestino12:  4813.20, cEspecifico14:     0.00, pagasExtra:  559.98, total: 10817.94 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 4 HORAS',   sueldo12:  4356.00, cDestino12:  3850.56, cEspecifico14:     0.00, pagasExtra:  448.00, total:  8654.56 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 3 HORAS',   sueldo12:  3267.00, cDestino12:  2887.92, cEspecifico14:     0.00, pagasExtra:  336.00, total:  6490.92 },
     ],
     trienios: [
-      { ded: 'TIEMPO COMPLETO', meses: 576.84, pagas: 96.14,  total: 672.98  },
-      { ded: 'T.P. 6 HORAS',   meses: 249.84, pagas: 41.64,  total: 291.48  },
-      { ded: 'T.P. 5 HORAS',   meses: 208.32, pagas: 34.72,  total: 243.04  },
-      { ded: 'T.P. 4 HORAS',   meses: 166.56, pagas: 27.76,  total: 194.32  },
-      { ded: 'T.P. 3 HORAS',   meses: 124.92, pagas: 20.82,  total: 145.74  },
+      { ded: 'TIEMPO COMPLETO', meses: 580.56, pagasExtra: 59.72, total: 640.28 },
+      { ded: 'T.P. 6 HORAS',   meses: 251.52, pagasExtra: 25.88, total: 277.40 },
+      { ded: 'T.P. 5 HORAS',   meses: 209.52, pagasExtra: 21.54, total: 231.06 },
+      { ded: 'T.P. 4 HORAS',   meses: 167.64, pagasExtra: 17.24, total: 184.88 },
+      { ded: 'T.P. 3 HORAS',   meses: 125.64, pagasExtra: 12.94, total: 138.58 },
     ],
     evaluaciones: [
-      { cat: 'PROFESOR CONTRATADO DOCTOR',           anual: 1636.56 },
-      { cat: 'PROFESOR COLABORADOR',                 anual: 1384.92 },
-      { cat: 'PROFESOR VISITANTE',                   anual: 1636.56 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',             anual: 1384.92 },
-      { cat: 'AYUDANTES (sólo eval. docentes)',      anual: 1172.52 },
+      { cat: 'Catedrático de Universidad',                                    anual: 2020.56 },
+      { cat: 'Titular de Universidad o Catedrático de Escuela Universitaria', anual: 1636.56 },
+      { cat: 'Titular de Escuela Universitaria',                              anual: 1385.04 },
     ],
-    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.',
   },
+
   2023: {
     subida: '3,5%',
     fuente_fecha: 'Febrero 2024',
     nota: null,
     salarios: [
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10388.32 },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 8657.05  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 6925.50  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5194.52  },
-      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 23489.45 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 27037.91 },
-      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 28684.55 },
-      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 37551.85 },
-      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 16267.34 },
-      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 13556.26 },
-      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 10845.04 },
-      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8133.67  },
-      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 7763.74  },
-      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 34388.97 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 34388.97 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 16873.68 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 14759.72 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 11842.58 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10317.50 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 6925.50  },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5194.52  },
+      // CATEDRÁTICOS DE UNIVERSIDAD
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'TIEMPO COMPLETO', sueldo12: 15610.56, cDestino12: 12230.76, cEspecifico14: 16087.96, pagasExtra: 3643.98, total: 47573.26 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 6 HORAS',   sueldo12:  6762.48, cDestino12: 11272.08, cEspecifico14:     0.00, pagasExtra: 2574.18, total: 20608.74 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 5 HORAS',   sueldo12:  5635.32, cDestino12:  9393.36, cEspecifico14:     0.00, pagasExtra: 2145.14, total: 17173.82 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 4 HORAS',   sueldo12:  4508.52, cDestino12:  7514.76, cEspecifico14:     0.00, pagasExtra: 1716.14, total: 13739.42 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 3 HORAS',   sueldo12:  3381.36, cDestino12:  5636.04, cEspecifico14:     0.00, pagasExtra: 1287.10, total: 10304.50 },
+      // TITULARES DE UNIVERSIDAD / CATEDRÁTICOS ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'TIEMPO COMPLETO', sueldo12: 15610.56, cDestino12: 11202.00, cEspecifico14:  7505.54, pagasExtra: 3472.52, total: 37790.62 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 6 HORAS',   sueldo12:  6762.48, cDestino12:  7639.68, cEspecifico14:     0.00, pagasExtra: 1968.78, total: 16370.94 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 5 HORAS',   sueldo12:  5635.32, cDestino12:  6366.36, cEspecifico14:     0.00, pagasExtra: 1640.64, total: 13642.32 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 4 HORAS',   sueldo12:  4508.52, cDestino12:  5093.04, cEspecifico14:     0.00, pagasExtra: 1312.52, total: 10914.08 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 3 HORAS',   sueldo12:  3381.36, cDestino12:  3819.84, cEspecifico14:     0.00, pagasExtra:  984.40, total:  8185.60 },
+      // TITULARES DE ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'TIEMPO COMPLETO', sueldo12: 15610.56, cDestino12:  9828.00, cEspecifico14:  4633.72, pagasExtra: 3243.52, total: 33315.80 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 6 HORAS',   sueldo12:  6762.48, cDestino12:  5978.04, cEspecifico14:     0.00, pagasExtra:  695.50, total: 13436.02 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 5 HORAS',   sueldo12:  5635.32, cDestino12:  4981.68, cEspecifico14:     0.00, pagasExtra:  579.58, total: 11196.58 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 4 HORAS',   sueldo12:  4508.52, cDestino12:  3985.32, cEspecifico14:     0.00, pagasExtra:  463.68, total:  8957.52 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 3 HORAS',   sueldo12:  3381.36, cDestino12:  2989.08, cEspecifico14:     0.00, pagasExtra:  347.76, total:  6718.20 },
     ],
     trienios: [
-      { ded: 'TIEMPO COMPLETO', meses: 597.03, pagas: 99.50,  total: 696.53  },
-      { ded: 'T.P. 6 HORAS',   meses: 258.58, pagas: 43.10,  total: 301.68  },
-      { ded: 'T.P. 5 HORAS',   meses: 215.61, pagas: 35.94,  total: 251.55  },
-      { ded: 'T.P. 4 HORAS',   meses: 172.39, pagas: 28.73,  total: 201.12  },
-      { ded: 'T.P. 3 HORAS',   meses: 129.29, pagas: 21.55,  total: 150.84  },
-      { ded: 'T.P. 2+2',       meses: 95.44,  pagas: 15.91,  total: 111.35  },
-      { ded: 'T.P. 1,5+1,5',   meses: 71.58,  pagas: 11.93,  total: 83.51   },
-      { ded: 'T.P. 8+6',       meses: 402.04, pagas: 67.01,  total: 469.05  },
-      { ded: 'T.P. 7+6',       meses: 351.83, pagas: 58.64,  total: 410.47  },
-      { ded: 'T.P. 6+6',       meses: 260.06, pagas: 43.34,  total: 303.40  },
-      { ded: 'T.P. 5+5',       meses: 216.86, pagas: 36.14,  total: 253.00  },
-      { ded: 'T.P. 4+4',       meses: 173.43, pagas: 28.91,  total: 202.34  },
-      { ded: 'T.P. 3+3',       meses: 130.03, pagas: 21.67,  total: 151.70  },
+      { ded: 'TIEMPO COMPLETO', meses: 600.84, pagasExtra: 61.82, total: 662.66 },
+      { ded: 'T.P. 6 HORAS',   meses: 260.28, pagasExtra: 26.78, total: 287.06 },
+      { ded: 'T.P. 5 HORAS',   meses: 216.84, pagasExtra: 22.30, total: 239.14 },
+      { ded: 'T.P. 4 HORAS',   meses: 173.52, pagasExtra: 17.84, total: 191.36 },
+      { ded: 'T.P. 3 HORAS',   meses: 130.08, pagasExtra: 13.40, total: 143.48 },
     ],
     evaluaciones: [
-      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1693.84 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1693.84 },
-      { cat: 'PROFESOR COLABORADOR',                    anual: 1433.39 },
-      { cat: 'PROFESOR VISITANTE',                      anual: 1693.84 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR (sólo eval. docentes)', anual: 1433.39 },
-      { cat: 'AYUDANTES (sólo eval. docentes)',         anual: 1213.56 },
+      { cat: 'Catedrático de Universidad',                                    anual: 2091.24 },
+      { cat: 'Titular de Universidad o Catedrático de Escuela Universitaria', anual: 1693.80 },
+      { cat: 'Titular de Escuela Universitaria',                              anual: 1433.52 },
     ],
-    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.',
   },
+
   2024: {
     subida: '2,5%',
     fuente_fecha: 'Julio 2025',
     nota: null,
     salarios: [
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10648.03 },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 8873.48  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 7098.64  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5324.38  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 2 HORAS',     anual: 3656.64  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 1,5 HORAS',   anual: 2742.44  },
-      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 24076.69 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 27713.86 },
-      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 29401.66 },
-      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 38490.65 },
-      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 16674.02 },
-      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 13895.17 },
-      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 11116.17 },
-      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8337.01  },
-      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 7957.83  },
-      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 35248.69 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 35248.69 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 17295.28 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 15128.71 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 12138.65 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10575.44 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 7098.64  },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5324.38  },
+      // CATEDRÁTICOS DE UNIVERSIDAD
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'TIEMPO COMPLETO', sueldo12: 16000.80, cDestino12: 12536.52, cEspecifico14: 16490.18, pagasExtra: 3735.08, total: 48762.58 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 6 HORAS',   sueldo12:  6931.56, cDestino12: 11553.84, cEspecifico14:     0.00, pagasExtra: 2638.52, total: 21123.92 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 5 HORAS',   sueldo12:  5776.20, cDestino12:  9628.20, cEspecifico14:     0.00, pagasExtra: 2198.76, total: 17603.16 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 4 HORAS',   sueldo12:  4621.20, cDestino12:  7702.56, cEspecifico14:     0.00, pagasExtra: 1759.04, total: 14082.80 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 3 HORAS',   sueldo12:  3465.84, cDestino12:  5776.92, cEspecifico14:     0.00, pagasExtra: 1319.28, total: 10562.04 },
+      // TITULARES DE UNIVERSIDAD / CATEDRÁTICOS ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'TIEMPO COMPLETO', sueldo12: 16000.80, cDestino12: 11482.08, cEspecifico14:  7693.14, pagasExtra: 3559.34, total: 38735.36 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 6 HORAS',   sueldo12:  6931.56, cDestino12:  7830.60, cEspecifico14:     0.00, pagasExtra: 2017.98, total: 16780.14 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 5 HORAS',   sueldo12:  5776.20, cDestino12:  6525.48, cEspecifico14:     0.00, pagasExtra: 1681.64, total: 13983.32 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 4 HORAS',   sueldo12:  4621.20, cDestino12:  5220.36, cEspecifico14:     0.00, pagasExtra: 1345.34, total: 11186.90 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 3 HORAS',   sueldo12:  3465.84, cDestino12:  3915.36, cEspecifico14:     0.00, pagasExtra: 1009.02, total:  8390.22 },
+      // TITULARES DE ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'TIEMPO COMPLETO', sueldo12: 16000.80, cDestino12: 10073.76, cEspecifico14:  4749.50, pagasExtra: 3324.62, total: 34148.68 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 6 HORAS',   sueldo12:  6931.56, cDestino12:  6127.56, cEspecifico14:     0.00, pagasExtra:  712.88, total: 13772.00 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 5 HORAS',   sueldo12:  5776.20, cDestino12:  5106.24, cEspecifico14:     0.00, pagasExtra:  594.06, total: 11476.50 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 4 HORAS',   sueldo12:  4621.20, cDestino12:  4085.04, cEspecifico14:     0.00, pagasExtra:  475.28, total:  9181.52 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 3 HORAS',   sueldo12:  3465.84, cDestino12:  3063.72, cEspecifico14:     0.00, pagasExtra:  356.46, total:  6886.02 },
     ],
     trienios: [
-      { ded: 'TIEMPO COMPLETO', meses: 611.96, pagas: 101.99, total: 713.95  },
-      { ded: 'T.P. 6 HORAS',   meses: 265.04, pagas: 44.18,  total: 309.22  },
-      { ded: 'T.P. 5 HORAS',   meses: 221.00, pagas: 36.84,  total: 257.84  },
-      { ded: 'T.P. 4 HORAS',   meses: 176.70, pagas: 29.45,  total: 206.15  },
-      { ded: 'T.P. 3 HORAS',   meses: 132.52, pagas: 22.09,  total: 154.61  },
-      { ded: 'T.P. 2+2',       meses: 97.82,  pagas: 16.30,  total: 114.12  },
-      { ded: 'T.P. 1,5+1,5',   meses: 73.37,  pagas: 12.23,  total: 85.60   },
-      { ded: 'T.P. 8+6',       meses: 412.09, pagas: 68.68,  total: 480.77  },
-      { ded: 'T.P. 7+6',       meses: 360.62, pagas: 60.10,  total: 420.72  },
-      { ded: 'T.P. 6+6',       meses: 266.60, pagas: 44.43,  total: 311.03  },
-      { ded: 'T.P. 5+5',       meses: 222.28, pagas: 37.05,  total: 259.33  },
-      { ded: 'T.P. 4+4',       meses: 177.77, pagas: 29.63,  total: 207.40  },
-      { ded: 'T.P. 3+3',       meses: 133.28, pagas: 22.21,  total: 155.49  },
+      { ded: 'TIEMPO COMPLETO', meses: 615.84, pagasExtra: 63.36, total: 679.20 },
+      { ded: 'T.P. 6 HORAS',   meses: 266.76, pagasExtra: 27.44, total: 294.20 },
+      { ded: 'T.P. 5 HORAS',   meses: 222.24, pagasExtra: 22.86, total: 245.10 },
+      { ded: 'T.P. 4 HORAS',   meses: 177.84, pagasExtra: 18.28, total: 196.12 },
+      { ded: 'T.P. 3 HORAS',   meses: 133.32, pagasExtra: 13.74, total: 147.06 },
     ],
     evaluaciones: [
-      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1736.19 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1736.19 },
-      { cat: 'PROFESOR COLABORADOR',                    anual: 1469.22 },
-      { cat: 'PROFESOR VISITANTE (sólo eval. docentes)',anual: 1736.19 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR (sólo eval. docentes)', anual: 1469.22 },
-      { cat: 'AYUDANTES (sólo eval. docentes)',         anual: 1243.90 },
+      { cat: 'Catedrático de Universidad',                                    anual: 2143.56 },
+      { cat: 'Titular de Universidad o Catedrático de Escuela Universitaria', anual: 1736.16 },
+      { cat: 'Titular de Escuela Universitaria',                              anual: 1469.40 },
     ],
-    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.',
   },
+
   2025: {
     subida: '2,5%',
     fuente_fecha: 'Diciembre 2025',
     nota: null,
     salarios: [
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 6 HORAS',     anual: 10914.12 },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 5 HORAS',     anual: 9095.38  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 4 HORAS',     anual: 7276.22  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 3 HORAS',     anual: 5457.62  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 2 HORAS',     anual: 3747.94  },
-      { cat: 'PROFESOR ASOCIADO',          ded: 'T.P. 1,5 HORAS',   anual: 2810.92  },
-      { cat: 'AYUDANTES',                  ded: 'TIEMPO COMPLETO',   anual: 24678.64 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',   ded: 'TIEMPO COMPLETO',   anual: 28406.70 },
-      { cat: 'PROFESOR COLABORADOR',       ded: 'TIEMPO COMPLETO',   anual: 30136.68 },
-      { cat: 'PROFESOR VISITANTE',         ded: 'TIEMPO COMPLETO',   anual: 39452.84 },
-      { cat: 'PROFESOR VISITANTE',         ded: '6 Hs.',             anual: 17090.92 },
-      { cat: 'PROFESOR VISITANTE',         ded: '5 Hs.',             anual: 14242.48 },
-      { cat: 'PROFESOR VISITANTE',         ded: '4 Hs.',             anual: 11394.18 },
-      { cat: 'PROFESOR VISITANTE',         ded: '3 Hs.',             anual: 8545.46  },
-      { cat: 'PROFESOR EMÉRITO',           ded: 'T.P. 3 HORAS',     anual: 6991.56  },
-      { cat: 'PROFESOR CONTRATADO DOCTOR', ded: 'TIEMPO COMPLETO',   anual: 36129.94 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',ded: 'TIEMPO COMPLETO',   anual: 36129.94 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 8+6',         anual: 17843.42 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 7+6',         anual: 15613.08 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 6+6',         anual: 12531.26 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 5+5',         anual: 10925.74 },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 4+4',         anual: 7276.22  },
-      { cat: 'PROFESOR SUSTITUTO',         ded: 'T.P. 3+3',         anual: 5457.62  },
+      // CATEDRÁTICOS DE UNIVERSIDAD
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'TIEMPO COMPLETO', sueldo12: 16400.88, cDestino12: 12849.96, cEspecifico14: 16902.48, pagasExtra: 3828.46, total: 49981.78 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 6 HORAS',   sueldo12:  7104.84, cDestino12: 11842.68, cEspecifico14:     0.00, pagasExtra: 2704.48, total: 21652.00 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 5 HORAS',   sueldo12:  5920.56, cDestino12:  9868.92, cEspecifico14:     0.00, pagasExtra: 2253.74, total: 18043.22 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 4 HORAS',   sueldo12:  4736.76, cDestino12:  7895.16, cEspecifico14:     0.00, pagasExtra: 1803.02, total: 14434.94 },
+      { cat: 'CATEDRÁTICOS DE UNIVERSIDAD',                          ded: 'T.P. 3 HORAS',   sueldo12:  3552.48, cDestino12:  5921.40, cEspecifico14:     0.00, pagasExtra: 1352.28, total: 10826.16 },
+      // TITULARES DE UNIVERSIDAD / CATEDRÁTICOS ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'TIEMPO COMPLETO', sueldo12: 16400.88, cDestino12: 11769.12, cEspecifico14:  7885.50, pagasExtra: 3648.32, total: 39703.82 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 6 HORAS',   sueldo12:  7104.84, cDestino12:  8026.44, cEspecifico14:     0.00, pagasExtra: 2068.44, total: 17199.72 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 5 HORAS',   sueldo12:  5920.56, cDestino12:  6688.68, cEspecifico14:     0.00, pagasExtra: 1723.70, total: 14332.94 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 4 HORAS',   sueldo12:  4736.76, cDestino12:  5350.92, cEspecifico14:     0.00, pagasExtra: 1378.98, total: 11466.66 },
+      { cat: 'TITULARES DE UNIVERSIDAD / CATEDRÁTICOS E.U.',         ded: 'T.P. 3 HORAS',   sueldo12:  3552.48, cDestino12:  4013.16, cEspecifico14:     0.00, pagasExtra: 1034.24, total:  8599.88 },
+      // TITULARES DE ESCUELA UNIVERSITARIA
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'TIEMPO COMPLETO', sueldo12: 16400.88, cDestino12: 10325.64, cEspecifico14:  4868.22, pagasExtra: 3407.74, total: 35002.48 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 6 HORAS',   sueldo12:  7104.84, cDestino12:  6280.68, cEspecifico14:     0.00, pagasExtra:  730.70, total: 14116.22 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 5 HORAS',   sueldo12:  5920.56, cDestino12:  5233.92, cEspecifico14:     0.00, pagasExtra:  608.92, total: 11763.40 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 4 HORAS',   sueldo12:  4736.76, cDestino12:  4187.16, cEspecifico14:     0.00, pagasExtra:  487.16, total:  9411.08 },
+      { cat: 'TITULARES DE ESCUELA UNIVERSITARIA',                   ded: 'T.P. 3 HORAS',   sueldo12:  3552.48, cDestino12:  3140.40, cEspecifico14:     0.00, pagasExtra:  365.38, total:  7058.26 },
     ],
     trienios: [
-      { ded: 'TIEMPO COMPLETO', meses: 627.12, pagas: 104.52, total: 731.64  },
-      { ded: 'T.P. 6 HORAS',   meses: 271.68, pagas: 45.28,  total: 316.96  },
-      { ded: 'T.P. 5 HORAS',   meses: 226.56, pagas: 37.76,  total: 264.32  },
-      { ded: 'T.P. 4 HORAS',   meses: 181.20, pagas: 30.20,  total: 211.40  },
-      { ded: 'T.P. 3 HORAS',   meses: 135.84, pagas: 22.64,  total: 158.48  },
-      { ded: 'T.P. 2+2',       meses: 100.20, pagas: 16.70,  total: 116.90  },
-      { ded: 'T.P. 1,5+1,5',   meses: 75.12,  pagas: 12.52,  total: 87.64   },
-      { ded: 'T.P. 8+6',       meses: 422.88, pagas: 70.48,  total: 493.36  },
-      { ded: 'T.P. 7+6',       meses: 370.08, pagas: 61.68,  total: 431.76  },
-      { ded: 'T.P. 6+6',       meses: 273.48, pagas: 45.58,  total: 319.06  },
-      { ded: 'T.P. 5+5',       meses: 227.76, pagas: 37.96,  total: 265.72  },
-      { ded: 'T.P. 4+4',       meses: 182.28, pagas: 30.38,  total: 212.66  },
-      { ded: 'T.P. 3+3',       meses: 136.68, pagas: 22.78,  total: 159.46  },
+      { ded: 'TIEMPO COMPLETO', meses: 631.20, pagasExtra: 64.94, total: 696.14 },
+      { ded: 'T.P. 6 HORAS',   meses: 273.48, pagasExtra: 28.12, total: 301.60 },
+      { ded: 'T.P. 5 HORAS',   meses: 227.76, pagasExtra: 23.44, total: 251.20 },
+      { ded: 'T.P. 4 HORAS',   meses: 182.28, pagasExtra: 18.74, total: 201.02 },
+      { ded: 'T.P. 3 HORAS',   meses: 136.68, pagasExtra: 14.08, total: 150.76 },
     ],
     evaluaciones: [
-      { cat: 'PROFESOR CONTRATADO DOCTOR',              anual: 1779.60 },
-      { cat: 'PROFESOR PERMANENTE LABORAL',             anual: 1779.60 },
-      { cat: 'PROFESOR COLABORADOR',                    anual: 1506.00 },
-      { cat: 'PROFESOR VISITANTE',                      anual: 1779.60 },
-      { cat: 'PROFESOR AYUDANTE DOCTOR',                anual: 1506.00 },
-      { cat: 'AYUDANTES',                               anual: 1274.88 },
+      { cat: 'Catedrático de Universidad',                                    anual: 2197.20 },
+      { cat: 'Titular de Universidad o Catedrático de Escuela Universitaria', anual: 1779.60 },
+      { cat: 'Titular de Escuela Universitaria',                              anual: 1506.12 },
     ],
-    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.'
+    complemento_adicional: 'Máximo 3.000,00 € (a tiempo completo), en función de méritos académicos o investigadores según baremo aprobado anualmente por el Consejo de Gobierno.',
   }
 };
 
@@ -499,11 +481,15 @@ const DATOS = {
    ESTADO
 ══════════════════════════════════════════ */
 let currentYear = 2025;
+let showDetail = false;
 
 /* ══════════════════════════════════════════
    UTILIDADES
 ══════════════════════════════════════════ */
-const fmt = n => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const fmt = n => {
+  if (n == null || isNaN(n)) return '—';
+  return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+};
 
 /* ══════════════════════════════════════════
    RENDER
@@ -511,7 +497,7 @@ const fmt = n => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFr
 function render() {
   const d = DATOS[currentYear];
 
-  // Group salaries by category
+  // Group by category
   const catMap = {};
   d.salarios.forEach(r => {
     if (!catMap[r.cat]) catMap[r.cat] = [];
@@ -519,25 +505,48 @@ function render() {
   });
   const cats = Object.keys(catMap);
 
+  // Top salary (CU TC)
+  const topSal = d.salarios.find(s => s.cat === 'CATEDRÁTICOS DE UNIVERSIDAD' && s.ded === 'TIEMPO COMPLETO');
+  const minSal = [...d.salarios].sort((a,b) => a.total - b.total)[0];
+
   // Build salary table rows
   let salRows = '';
   cats.forEach(cat => {
     const items = catMap[cat];
-    items.forEach((r, i) => {
-      salRows += `<tr>
-        <td class="cat-cell">${i === 0 ? r.cat : ''}</td>
-        <td class="ded-cell">${r.ded}</td>
-        <td class="num"><span class="badge-a">${fmt(r.anual)}</span></td>
-      </tr>`;
+    salRows += `<tr class="subhdr"><td colspan="${showDetail ? 6 : 3}">${cat}</td></tr>`;
+    items.forEach(r => {
+      if (showDetail) {
+        salRows += `<tr>
+          <td class="ded-cell">${r.ded}</td>
+          <td class="num"><span class="badge-s">${fmt(r.sueldo12)}</span></td>
+          <td class="num"><span class="badge-s">${fmt(r.cDestino12)}</span></td>
+          <td class="num"><span class="badge-s">${r.cEspecifico14 > 0 ? fmt(r.cEspecifico14) : '—'}</span></td>
+          <td class="num"><span class="badge-s">${fmt(r.pagasExtra)}</span></td>
+          <td class="num"><span class="badge-a">${fmt(r.total)}</span></td>
+        </tr>`;
+      } else {
+        salRows += `<tr>
+          <td class="ded-cell">${r.ded}</td>
+          <td class="num"><span class="badge-a">${fmt(r.total)}</span></td>
+        </tr>`;
+      }
     });
   });
 
-  // Build trienio table rows
+  const detailHeader = showDetail
+    ? `<th scope="col" class="num" style="min-width:130px">Sueldo<br><small>(12 meses)</small></th>
+       <th scope="col" class="num" style="min-width:130px">C. Destino<br><small>(12 meses)</small></th>
+       <th scope="col" class="num" style="min-width:130px">C. Específico<br><small>(14 meses)</small></th>
+       <th scope="col" class="num" style="min-width:120px">Pagas extra</th>
+       <th scope="col" class="num" style="min-width:130px">Total anual</th>`
+    : `<th scope="col" class="num" style="min-width:150px">Total anual</th>`;
+
+  // Build trienio rows
   let trRows = d.trienios.map(r => `
     <tr>
       <td class="ded-cell">${r.ded}</td>
       <td class="num"><span class="badge-m">${fmt(r.meses)}</span></td>
-      <td class="num"><span class="badge-m">${fmt(r.pagas)}</span></td>
+      <td class="num"><span class="badge-m">${fmt(r.pagasExtra)}</span></td>
       <td class="num"><span class="badge-a">${fmt(r.total)}</span></td>
     </tr>
   `).join('');
@@ -558,13 +567,18 @@ function render() {
         <div class="kpi-sub">Subida salarial: ${d.subida}</div>
       </div>
       <div class="kpi">
-        <div class="kpi-lbl">Categorías docentes</div>
-        <div class="kpi-val">${cats.length}</div>
-        <div class="kpi-sub">PDI Laboral UCM</div>
+        <div class="kpi-lbl">Máximo (CU · T.C.)</div>
+        <div class="kpi-val">${topSal ? fmt(topSal.total) : '—'}</div>
+        <div class="kpi-sub">Catedrático tiempo completo</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Mínimo (TEU · 3h.)</div>
+        <div class="kpi-val">${minSal ? fmt(minSal.total) : '—'}</div>
+        <div class="kpi-sub">T.E.U. a T.P. 3 horas</div>
       </div>
     </div>
 
-    ${d.nota ? `<div class="nota">⚠️ ${d.nota}</div>` : ''}
+    ${d.nota ? `<div class="nota">ℹ️ ${d.nota}</div>` : ''}
 
     <!-- TABLA 1: SALARIOS -->
     <div class="section-block">
@@ -572,17 +586,22 @@ function render() {
         <h2>Retribuciones ${currentYear} (subida ${d.subida})</h2>
         <span class="sec-tag">Importe total anual por categoría y dedicación</span>
       </div>
+      <button class="toggle-detail" onclick="toggleDetail()">
+        ${showDetail ? '▲ Ocultar desglose (sueldo / c. destino / c. específico)' : '▼ Ver desglose por componentes salariales'}
+      </button>
       <div class="tw">
-        <table aria-label="Retribuciones PDI Laboral ${currentYear}">
+        <table aria-label="Retribuciones PDI Funcionario ${currentYear}" class="${showDetail ? 'detail-cols' : ''}">
           <thead>
             <tr>
-              <th scope="col" style="min-width:220px">Categoría</th>
-              <th scope="col" style="min-width:160px">Dedicación / Horas lectivas</th>
-              <th scope="col" class="num" style="min-width:150px">Total anual</th>
+              <th scope="col" style="min-width:280px">Dedicación / Horas lectivas</th>
+              ${detailHeader}
             </tr>
           </thead>
           <tbody>${salRows}</tbody>
         </table>
+      </div>
+      <div class="info-box" style="margin-top:10px; font-size:11.5px;">
+        * Paga extra = Sueldo paga extra (inferior al mensual) + C. Destino (igual al mensual). El complemento específico se percibe distribuido en 14 mensualidades solo para el régimen de tiempo completo.
       </div>
     </div>
 
@@ -593,12 +612,12 @@ function render() {
         <span class="sec-tag">Independiente de la categoría docente</span>
       </div>
       <div class="tw">
-        <table aria-label="Trienios PDI Laboral ${currentYear}">
+        <table aria-label="Trienios PDI Funcionario ${currentYear}">
           <thead>
             <tr>
               <th scope="col" style="min-width:160px">Dedicación</th>
               <th scope="col" class="num" style="min-width:120px">12 meses</th>
-              <th scope="col" class="num" style="min-width:120px">2 pagas extra</th>
+              <th scope="col" class="num" style="min-width:130px">2 pagas extra</th>
               <th scope="col" class="num" style="min-width:120px">Total anual</th>
             </tr>
           </thead>
@@ -614,10 +633,10 @@ function render() {
         <span class="sec-tag">Por evaluación positiva acreditada</span>
       </div>
       <div class="tw">
-        <table aria-label="Evaluaciones PDI Laboral ${currentYear}">
+        <table aria-label="Evaluaciones PDI Funcionario ${currentYear}">
           <thead>
             <tr>
-              <th scope="col" style="min-width:260px">Categoría</th>
+              <th scope="col" style="min-width:300px">Categoría</th>
               <th scope="col" class="num" style="min-width:150px">Importe anual</th>
             </tr>
           </thead>
@@ -642,20 +661,18 @@ function render() {
     <div class="fuente">
       <strong>Fuente:</strong>
       <a href="https://www.ucm.es/servicio-de-coordinacion,-nominas-y-seguros-sociales" target="_blank" rel="noopener">
-        Servicio de Coordinación, Nóminas y Seguros Sociales – UCM
+        Vicegerencia de Recursos Humanos – UCM
       </a>
       &nbsp;·&nbsp;
-      Vicegerencia de Recursos Humanos
+      Datos fuente: <strong>${d.fuente_fecha}</strong>
       &nbsp;·&nbsp;
-      Fecha de actualización de los datos: <strong>8 de abril de 2025</strong>
-      &nbsp;·&nbsp;
-      Datos fuente: ${d.fuente_fecha}
+      ${currentYear === 2022 ? 'Fuente original: documento Word (nov. 2022), convertido a tabla estructurada.' : 'Fuente original: archivo Excel (XLS) publicado en el Portal de Transparencia UCM.'}
     </div>
   `;
 }
 
 /* ══════════════════════════════════════════
-   CAMBIO DE AÑO
+   INTERACCIONES
 ══════════════════════════════════════════ */
 function setYear(y) {
   currentYear = y;
@@ -665,24 +682,28 @@ function setYear(y) {
   render();
 }
 
+function toggleDetail() {
+  showDetail = !showDetail;
+  render();
+}
+
 /* ══════════════════════════════════════════
    EXPORTACIÓN
 ══════════════════════════════════════════ */
 function buildExportRows() {
   const d = DATOS[currentYear];
   const rows = [
-    [`Universidad Complutense de Madrid — Retribuciones PDI Laboral ${currentYear}`],
-    [`Fuente: Servicio de Coordinación, Nóminas y Seguros Sociales · Vicegerencia de RRHH`],
-    [`Subida salarial: ${d.subida} · Datos fuente: ${d.fuente_fecha} · Actualización portal: 8 de abril de 2025`],
+    [`Universidad Complutense de Madrid — Retribuciones PDI Funcionario ${currentYear}`],
+    [`Fuente: Vicegerencia de Recursos Humanos · Subida salarial: ${d.subida} · Datos fuente: ${d.fuente_fecha}`],
     [],
     ['TABLA 1: RETRIBUCIONES ANUALES'],
-    ['Categoría', 'Dedicación / Horas lectivas', 'Total anual (€)'],
+    ['Categoría', 'Dedicación / Horas lectivas', 'Sueldo 12 meses (€)', 'C. Destino 12 meses (€)', 'C. Específico 14 meses (€)', 'Pagas extra (€)', 'Total anual (€)'],
   ];
-  d.salarios.forEach(r => rows.push([r.cat, r.ded, r.anual]));
+  d.salarios.forEach(r => rows.push([r.cat, r.ded, r.sueldo12, r.cDestino12, r.cEspecifico14, r.pagasExtra, r.total]));
   rows.push([]);
   rows.push(['TABLA 2: ANTIGÜEDAD – IMPORTE DE CADA TRIENIO']);
   rows.push(['Dedicación', '12 meses (€)', '2 pagas extra (€)', 'Total anual (€)']);
-  d.trienios.forEach(r => rows.push([r.ded, r.meses, r.pagas, r.total]));
+  d.trienios.forEach(r => rows.push([r.ded, r.meses, r.pagasExtra, r.total]));
   rows.push([]);
   rows.push(['TABLA 3: IMPORTE DE CADA EVALUACIÓN DOCENTE O INVESTIGADORA']);
   rows.push(['Categoría', 'Importe anual (€)']);
@@ -690,6 +711,8 @@ function buildExportRows() {
   rows.push([]);
   rows.push(['COMPLEMENTO ADICIONAL']);
   rows.push([d.complemento_adicional]);
+  rows.push([]);
+  rows.push(['* Paga extra = Sueldo paga extra (inferior al mensual) + C. Destino (igual al mensual)']);
   return rows;
 }
 
@@ -697,14 +720,13 @@ function exportXLSX() {
   const rows = buildExportRows();
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!merges'] = [
-    {s:{r:0,c:0},e:{r:0,c:3}},
-    {s:{r:1,c:0},e:{r:1,c:3}},
-    {s:{r:2,c:0},e:{r:2,c:3}},
+    {s:{r:0,c:0},e:{r:0,c:6}},
+    {s:{r:1,c:0},e:{r:1,c:6}},
   ];
-  ws['!cols'] = [{wch:45},{wch:28},{wch:20},{wch:20}];
+  ws['!cols'] = [{wch:50},{wch:26},{wch:22},{wch:24},{wch:26},{wch:18},{wch:18}];
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `PDI Laboral ${currentYear}`);
-  XLSX.writeFile(wb, `UCM_Retribuciones_PDI_Laboral_${currentYear}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, `PDI Funcionario ${currentYear}`);
+  XLSX.writeFile(wb, `UCM_Retribuciones_PDI_Funcionario_${currentYear}.xlsx`);
 }
 
 function exportCSV() {
@@ -717,7 +739,7 @@ function exportCSV() {
   ).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'}));
-  a.download = `UCM_Retribuciones_PDI_Laboral_${currentYear}.csv`;
+  a.download = `UCM_Retribuciones_PDI_Funcionario_${currentYear}.csv`;
   a.click();
 }
 
